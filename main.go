@@ -65,11 +65,20 @@ var customers = map[string]Customer{
 
 var emptyMap = map[string]string{}
 
+func showIndexPage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	http.ServeFile(w,r,"./static/index.html")
+}
+
 func getCustomers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","application/json")
 	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(customers)
+	customerList := []Customer{}
+	for _, customer := range customers {
+		customerList = append(customerList, customer)
+	}
+	json.NewEncoder(w).Encode(customerList)
 }
 
 func getCustomer(w http.ResponseWriter, r *http.Request) {
@@ -106,6 +115,7 @@ func updateCustomer(w http.ResponseWriter, r *http.Request) {
     reqBody, _ := ioutil.ReadAll(r.Body)
     json.Unmarshal(reqBody, &customer)
 	id := mux.Vars(r)["id"]
+	customer.Id = id
 	if _, ok := customers[id]; ok {
 		customers[id] = customer
 		w.WriteHeader(http.StatusOK)
@@ -134,6 +144,7 @@ func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 func main() {
 	router := mux.NewRouter()
 
+	router.HandleFunc("/", showIndexPage).Methods("GET")
 	router.HandleFunc("/customers", getCustomers).Methods("GET")
 	router.HandleFunc("/customers/{id}", getCustomer).Methods("GET")
 	router.HandleFunc("/customers", addCustomer).Methods("POST")
